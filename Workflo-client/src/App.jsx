@@ -1,11 +1,13 @@
-import { Button } from "./components/ui/button";
+import { Routes, Route } from "react-router";
+import LandingPage from "./pages/LandingPage";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
-    <>
-      <h1 className="text-2xl font-bold">Vite + React</h1>
-      <Button>Shadcn Button</Button>
-    </>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+    </Routes>
   );
 }
 
