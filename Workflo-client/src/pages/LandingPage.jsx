@@ -15,6 +15,7 @@ function LandingPage() {
     setLoading(true);
     try {
       const result = await signInWithGoogle();
+
       await saveUser(result?.user);
 
       console.log("User logged in:", result.user);

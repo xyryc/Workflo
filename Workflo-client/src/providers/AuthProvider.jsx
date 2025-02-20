@@ -6,6 +6,7 @@ import {
   signInWithPopup,
   getAuth,
   onAuthStateChanged,
+  signOut,
 } from "firebase/auth";
 import { app } from "../firebase/firebase.init";
 import axios from "axios";
@@ -21,6 +22,11 @@ const AuthProvider = ({ children }) => {
   const signInWithGoogle = () => {
     setLoading(true);
     return signInWithPopup(auth, googleProvider);
+  };
+
+  const logOut = async () => {
+    setLoading(true);
+    return signOut(auth);
   };
 
   // onAuthStateChange
@@ -57,9 +63,11 @@ const AuthProvider = ({ children }) => {
 
   const authInfo = {
     user,
+    setUser,
     loading,
     setLoading,
     signInWithGoogle,
+    logOut
   };
 
   return (
