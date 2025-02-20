@@ -1,31 +1,44 @@
 import { useContext } from "react";
 import { AuthContext } from "../providers/AuthProvider";
+import { Button } from "../components/ui/button";
+import { useNavigate } from "react-router";
+import toast from "react-hot-toast";
+import { saveUser } from "../api/utils";
+import { Loader2 } from "lucide-react";
 
 function LandingPage() {
-  const { user } = useContext(AuthContext);
-  console.log(user);
+  const { loading, setLoading, signInWithGoogle } = useContext(AuthContext);
 
-  //   const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  //   const handleGoogleLogin = async () => {
-  //     try {
-  //       const result = await signInWithPopup(auth, provider);
-  //       console.log("User logged in:", result.user);
-  //       navigate("/dashboard"); // Redirect to dashboard after login
-  //     } catch (error) {
-  //       console.error("Login error:", error);
-  //     }
-  //   };
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      const res = await saveUser(result?.user);
+      console.log(res);
+
+      console.log("User logged in:", result.user);
+      toast.success(`Logged in as ${result?.user?.displayName}`);
+
+      //   navigate
+      navigate("/dashboard");
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(error?.message);
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center gap-6 h-screen">
       <h1 className="text-3xl font-bold">Welcome to Workflo</h1>
-      <button
-        // onClick={handleGoogleLogin}
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-      >
+      <Button onClick={handleGoogleLogin} disabled={loading}>
+        {loading && <Loader2 className="animate-spin" />}
         Sign in with Google
-      </button>
+      </Button>
     </div>
   );
 }
