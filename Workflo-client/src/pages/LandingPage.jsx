@@ -15,15 +15,13 @@ function LandingPage() {
     setLoading(true);
     try {
       const result = await signInWithGoogle();
-      const res = await saveUser(result?.user);
-      console.log(res);
+      await saveUser(result?.user);
 
       console.log("User logged in:", result.user);
       toast.success(`Logged in as ${result?.user?.displayName}`);
 
-      //   navigate
+      // navigate
       navigate("/dashboard");
-
       setLoading(false);
     } catch (error) {
       console.error("Login error:", error);
