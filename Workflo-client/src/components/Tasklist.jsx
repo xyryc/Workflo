@@ -23,6 +23,10 @@ const Tasklist = () => {
   const { user } = useContext(AuthContext);
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
+  const mouseSensor = useSensor(MouseSensor);
+  const touchSensor = useSensor(TouchSensor);
+  const keyboardSensor = useSensor(KeyboardSensor);
+  const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
   // Fetch tasks
   const { data: tasks = [] } = useQuery({
@@ -69,6 +73,8 @@ const Tasklist = () => {
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
+    if (!over) return;
+
     // Check if the destination is valid
     const sourceCategory = Object.keys(categorizedTasks).find((cat) =>
       categorizedTasks[cat]?.some((task) => task._id === active.id)
@@ -90,7 +96,7 @@ const Tasklist = () => {
       !destinationCategory ||
       !categorizedTasks[destinationCategory]
     ) {
-      toast.error("Can't drop there!");
+      toast.error("Not allowed!");
       return;
     }
 
@@ -119,11 +125,15 @@ const Tasklist = () => {
     }
   };
 
-  const mouseSensor = useSensor(MouseSensor);
-  const touchSensor = useSensor(TouchSensor);
-  const keyboardSensor = useSensor(KeyboardSensor);
-
-  const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
+  const deleteTask = useMutation({
+    mutationFn: async (taskId) => {
+      await axiosSecure.delete(`/tasks/${taskId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task deleted!");
+    },
+  });
 
   return (
     <DndContext
@@ -143,7 +153,11 @@ const Tasklist = () => {
             >
               <ul className="min-h-[200px] min-w-[300px] border border-black/10 p-2 space-y-2 rounded-xl">
                 {categorizedTasks[category].map((task) => (
-                  <TaskItem key={task._id} task={task} />
+                  <TaskItem
+                    key={task._id}
+                    task={task}
+                    onDelete={(taskId) => deleteTask.mutate(taskId)}
+                  />
                 ))}
               </ul>
             </SortableContext>

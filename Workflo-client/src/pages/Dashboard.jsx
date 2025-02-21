@@ -3,7 +3,7 @@ import Tasklist from "../components/Tasklist";
 
 const Dashboard = () => {
   return (
-    <div className="flex flex-col items-center gap-6 h-screen py-10">
+    <div className="flex flex-col items-center gap-6 h-screen py-10 container mx-auto">
       <h2>Your Workflo</h2>
       <TaskForm />
       <Tasklist />
