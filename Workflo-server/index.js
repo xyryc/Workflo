@@ -8,7 +8,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: [
+    "http://localhost:5173",
+    "https://workflo.web.app",
+    "https://workflo.firebaseapp.com",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -27,8 +31,8 @@ app.use(express.json());
 app.use(cors(corsOptions));
 app.use(logger);
 
-// const uri = "mongodb://localhost:27017/";
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.t08r2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = "mongodb://localhost:27017/";
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.t08r2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -78,6 +82,17 @@ async function run() {
   // save a new task
   app.post("/tasks", async (req, res) => {
     const task = req.body;
+
+    // Find the highest order in the "To-Do" category
+    const lastTask = await tasksCollection
+      .find({ category: "To-Do" })
+      .sort({ order: -1 }) // Sort in descending order
+      .limit(1)
+      .toArray();
+
+    const newOrder = lastTask.length > 0 ? lastTask[0].order + 1 : 1;
+
+    task.order = newOrder;
     task.createdAt = Date.now();
     task.category = "To-Do";
 
@@ -93,19 +108,48 @@ async function run() {
   });
 
   // update task category
-  app.patch("/tasks/:id", async (req, res) => {
-    const { id } = req.params;
-    const { category } = req.body;
-    const result = await tasksCollection.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { category } }
-    );
-    res.send(result);
+  // app.patch("/tasks/:id", async (req, res) => {
+  //   const { id } = req.params;
+  //   const { category, order } = req.body;
+  //   const result = await tasksCollection.updateOne(
+  //     { _id: new ObjectId(id) },
+  //     { $set: { category, order } }
+  //   );
+  //   res.send(result);
+  // });
+
+  app.put("/tasks/update-order-category", async (req, res) => {
+    const { taskId, newCategory, tasks } = req.body;
+
+    try {
+      // Update task category
+      await tasksCollection.updateOne(
+        { _id: new ObjectId(taskId) },
+        { $set: { category: newCategory } }
+      );
+
+      // Update orders in the new category
+      const bulkOps = tasks.map((task) => ({
+        updateOne: {
+          filter: { _id: new ObjectId(task._id) },
+          update: { $set: { order: task.order } },
+        },
+      }));
+
+      if (bulkOps.length > 0) {
+        await tasksCollection.bulkWrite(bulkOps);
+      }
+
+      res.json({ message: "Task updated successfully!" });
+    } catch (error) {
+      res.status(500).json({ message: "Error updating task", error });
+    }
   });
 
   // delete a task
-  app.delete("/tasks/:id", async (req, res) => {
+  app.delete("/tasks/delete/:id", async (req, res) => {
     const { id } = req.params;
+
     const query = { _id: new ObjectId(id) };
     const result = await tasksCollection.deleteOne(query);
 

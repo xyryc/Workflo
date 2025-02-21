@@ -1,10 +1,8 @@
 import { useContext, useState, useEffect } from "react";
 import {
   DndContext,
-  closestCenter,
   useSensors,
   useSensor,
-  PointerSensor,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
@@ -14,7 +12,7 @@ import { SortableContext } from "@dnd-kit/sortable";
 import { AuthContext } from "../providers/AuthProvider";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosSecure from "../hooks/useAxiosSecure";
-import axios from "axios";
+
 import { TaskItem } from "./TaskItem";
 import toast from "react-hot-toast";
 import { Droppable } from "./Droppable";
@@ -27,107 +25,111 @@ const Tasklist = () => {
   const touchSensor = useSensor(TouchSensor);
   const keyboardSensor = useSensor(KeyboardSensor);
   const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
-
-  // Fetch tasks
-  const { data: tasks = [] } = useQuery({
-    queryKey: ["tasks"],
-    enabled: !!user?.email,
-    queryFn: async () => {
-      const { data } = await axios.get(
-        `http://localhost:5000/tasks?email=${user?.email}`
-      );
-      return data;
-    },
-  });
-
-  // Local state for categorized tasks
   const [categorizedTasks, setCategorizedTasks] = useState({
     "To-Do": [],
     "In Progress": [],
     Done: [],
   });
 
-  // 🛠 Update categorizedTasks when tasks change
+  // Fetch tasks
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks"],
+    enabled: !!user?.email,
+    queryFn: async () => {
+      const { data } = await axiosSecure.get(`/tasks?email=${user?.email}`);
+      return data;
+    },
+  });
+
   useEffect(() => {
     if (tasks.length > 0) {
       setCategorizedTasks({
-        "To-Do": tasks.filter((task) => task.category === "To-Do"),
-        "In Progress": tasks.filter((task) => task.category === "In Progress"),
-        Done: tasks.filter((task) => task.category === "Done"),
+        "To-Do": tasks
+          .filter((task) => task.category === "To-Do")
+          .sort((a, b) => a.order - b.order), // Sort by order
+
+        "In Progress": tasks
+          .filter((task) => task.category === "In Progress")
+          .sort((a, b) => a.order - b.order), // Sort by order
+
+        Done: tasks
+          .filter((task) => task.category === "Done")
+          .sort((a, b) => a.order - b.order), // Sort by order
       });
     }
   }, [tasks]);
 
-  // API call to update task category
-  const updateTaskCategory = useMutation({
-    mutationFn: async ({ taskId, category }) => {
-      await axiosSecure.patch(`/tasks/${taskId}`, { category });
-      toast.success(`Task ${category}!`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
+  // API call to update task category, order
+  // const updateTaskOrder = useMutation({
+  //   mutationFn: async ({ taskId, category, order }) => {
+  //     return axiosSecure.patch(`/tasks/${taskId}`, { category, order });
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  //     toast.success("Task updated successfully!");
+  //   },
+  // });
 
-  // Handle Drag End
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
-
     if (!over) return;
 
-    // Check if the destination is valid
+    // Find the source and destination categories
     const sourceCategory = Object.keys(categorizedTasks).find((cat) =>
       categorizedTasks[cat]?.some((task) => task._id === active.id)
     );
+    const destinationCategory = over.id.startsWith("task_")
+      ? sourceCategory
+      : over.id; // Ensure it's a valid category
 
-    // Ensure over.id is a valid category (not a task ID)
-    const destinationCategory =
-      over && !over.id.startsWith("task_") ? over.id : null;
-
-    console.log(
-      "Source Category:",
-      sourceCategory,
-      "Destination Category:",
-      destinationCategory
-    );
-
-    if (
-      !sourceCategory ||
-      !destinationCategory ||
-      !categorizedTasks[destinationCategory]
-    ) {
-      toast.error("Not allowed!");
+    if (!sourceCategory || !destinationCategory) {
+      toast.error("Invalid move!");
       return;
     }
 
-    if (sourceCategory !== destinationCategory) {
-      const movedTask = categorizedTasks[sourceCategory].find(
-        (task) => task._id === active.id
-      );
+    // Get the moved task
+    const movedTask = categorizedTasks[sourceCategory].find(
+      (task) => task._id === active.id
+    );
+    if (!movedTask) return;
 
-      // Update state to move the task
-      setCategorizedTasks((prev) => ({
-        ...prev,
-        [sourceCategory]: prev[sourceCategory].filter(
-          (task) => task._id !== active.id
-        ),
-        [destinationCategory]: [
-          ...(prev[destinationCategory] || []),
-          movedTask,
-        ],
-      }));
+    // Remove from the source category
+    const updatedSourceTasks = categorizedTasks[sourceCategory].filter(
+      (task) => task._id !== active.id
+    );
 
-      // Call the mutation to update task category in the backend
-      updateTaskCategory.mutate({
-        taskId: active.id,
-        category: destinationCategory,
-      });
-    }
+    // Add to the destination category at the last position
+    const updatedDestinationTasks = [
+      ...categorizedTasks[destinationCategory],
+      { ...movedTask, category: destinationCategory },
+    ];
+
+    // Recalculate the order for the destination category
+    updatedDestinationTasks.forEach((task, index) => {
+      task.order = index;
+    });
+
+    // Update state
+    setCategorizedTasks((prev) => ({
+      ...prev,
+      [sourceCategory]: updatedSourceTasks,
+      [destinationCategory]: updatedDestinationTasks,
+    }));
+
+    // Send update to the backend
+    await axiosSecure.put(`/tasks/update-order-category`, {
+      taskId: active.id,
+      newCategory: destinationCategory,
+      tasks: updatedDestinationTasks.map(({ _id, order }) => ({ _id, order })),
+    });
+
+    toast.success("Task moved successfully!");
   };
 
   const deleteTask = useMutation({
     mutationFn: async (taskId) => {
-      await axiosSecure.delete(`/tasks/${taskId}`);
+      const res = await axiosSecure.delete(`/tasks/delete/${taskId}`);
+      console.log(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
