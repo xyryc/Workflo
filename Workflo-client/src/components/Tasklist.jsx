@@ -1,5 +1,15 @@
 import { useContext, useState, useEffect } from "react";
-import { DndContext, closestCenter } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  useSensors,
+  useSensor,
+  PointerSensor,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  rectIntersection,
+} from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
 import { AuthContext } from "../providers/AuthProvider";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -48,6 +58,7 @@ const Tasklist = () => {
   const updateTaskCategory = useMutation({
     mutationFn: async ({ taskId, category }) => {
       await axiosSecure.patch(`/tasks/${taskId}`, { category });
+      toast.success(`Task ${category}!`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -58,28 +69,28 @@ const Tasklist = () => {
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
-    console.log("Over ID:", over.id);
-    console.log("Available Categories:", Object.keys(categorizedTasks));
-
-    if (!over) return;
-
+    // Check if the destination is valid
     const sourceCategory = Object.keys(categorizedTasks).find((cat) =>
       categorizedTasks[cat]?.some((task) => task._id === active.id)
     );
 
-    const destinationCategory = over.id;
+    // Ensure over.id is a valid category (not a task ID)
+    const destinationCategory =
+      over && !over.id.startsWith("task_") ? over.id : null;
 
-    console.log(categorizedTasks[destinationCategory]);
+    console.log(
+      "Source Category:",
+      sourceCategory,
+      "Destination Category:",
+      destinationCategory
+    );
 
     if (
       !sourceCategory ||
       !destinationCategory ||
       !categorizedTasks[destinationCategory]
     ) {
-      toast.error("Invalid drag operation:", {
-        sourceCategory,
-        destinationCategory,
-      });
+      toast.error("Can't drop there!");
       return;
     }
 
@@ -88,6 +99,7 @@ const Tasklist = () => {
         (task) => task._id === active.id
       );
 
+      // Update state to move the task
       setCategorizedTasks((prev) => ({
         ...prev,
         [sourceCategory]: prev[sourceCategory].filter(
@@ -99,6 +111,7 @@ const Tasklist = () => {
         ],
       }));
 
+      // Call the mutation to update task category in the backend
       updateTaskCategory.mutate({
         taskId: active.id,
         category: destinationCategory,
@@ -106,20 +119,33 @@ const Tasklist = () => {
     }
   };
 
+  const mouseSensor = useSensor(MouseSensor);
+  const touchSensor = useSensor(TouchSensor);
+  const keyboardSensor = useSensor(KeyboardSensor);
+
+  const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
+
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4">
+    <DndContext
+      sensors={sensors}
+      collisionDetection={rectIntersection}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.keys(categorizedTasks).map((category) => (
           <Droppable key={category} id={category}>
-            <h2 className="font-bold text-lg mb-2">{category}</h2>
+            <h2 className="font-bold text-lg mb-4 p-2 bg-gray-200 rounded-md shadow-md">
+              {category}
+            </h2>
+
             <SortableContext
               items={categorizedTasks[category].map((task) => task._id)}
             >
-              <div className="min-h-[200px] p-2 space-y-2">
+              <ul className="min-h-[200px] min-w-[300px] border border-black/10 p-2 space-y-2 rounded-xl">
                 {categorizedTasks[category].map((task) => (
                   <TaskItem key={task._id} task={task} />
                 ))}
-              </div>
+              </ul>
             </SortableContext>
           </Droppable>
         ))}

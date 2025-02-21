@@ -14,9 +14,12 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { useContext } from "react";
 import { AuthContext } from "../providers/AuthProvider";
+import { useQueryClient } from "@tanstack/react-query";
+import { DialogClose } from "./ui/dialog";
 
 const TaskForm = () => {
   const { user } = useContext(AuthContext);
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,6 +33,9 @@ const TaskForm = () => {
     try {
       await axios.post("http://localhost:5000/tasks", payload);
       toast.success("Task added!");
+
+      // Refetch task list
+      queryClient.invalidateQueries(["tasks"]);
     } catch (error) {
       console.log(error);
       toast.error(error.message);
@@ -76,7 +82,9 @@ const TaskForm = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Save task</Button>
+            <DialogClose asChild>
+              <Button type="submit">Save task</Button>
+            </DialogClose>
           </DialogFooter>
         </form>
       </DialogContent>

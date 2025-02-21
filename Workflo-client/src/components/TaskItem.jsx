@@ -8,7 +8,8 @@ export const TaskItem = ({ task }) => {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: "transform 200ms ease-in-out",
+    zIndex: transform ? 999 : "auto", // Ensures the dragged item stays on top
   };
 
   return (
@@ -16,7 +17,7 @@ export const TaskItem = ({ task }) => {
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className="p-2 border border-black bg-white cursor-grab shadow-md rounded-md"
+      className="p-2 border border-black bg-white cursor-grab shadow-md rounded-md transition-all duration-200 ease-in-out"
       style={style}
     >
       {task.title}
