@@ -12,15 +12,20 @@ import {
 import { Label } from "./ui/label";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { useContext } from "react";
+import { AuthContext } from "../providers/AuthProvider";
 
 const TaskForm = () => {
+  const { user } = useContext(AuthContext);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
     const title = form.title.value;
     const description = form.description.value;
+    const email = user?.email;
 
-    const payload = { title, description };
+    const payload = { title, description, email };
 
     try {
       await axios.post("http://localhost:5000/tasks", payload);
