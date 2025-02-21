@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -12,6 +13,7 @@ const corsOptions = {
     "http://localhost:5173",
     "https://workflo.web.app",
     "https://workflo.firebaseapp.com",
+    "https://workflo-server.vercel.app",
   ],
   credentials: true,
   optionSuccessStatus: 200,
@@ -28,6 +30,7 @@ const logger = (req, res, next) => {
 
 // middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(logger);
 

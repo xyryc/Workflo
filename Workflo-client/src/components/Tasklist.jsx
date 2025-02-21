@@ -70,61 +70,79 @@ const Tasklist = () => {
   //   },
   // });
 
+  // update task orer and category
+  const updateTask = useMutation({
+    mutationFn: async ({ taskId, newCategory, tasks }) => {
+      return await axiosSecure.put(`/tasks/update-order-category`, {
+        taskId,
+        newCategory,
+        tasks,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task moved successfully!");
+    },
+  });
+
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over) return;
-
-    // Find the source and destination categories
+  
     const sourceCategory = Object.keys(categorizedTasks).find((cat) =>
       categorizedTasks[cat]?.some((task) => task._id === active.id)
     );
     const destinationCategory = over.id.startsWith("task_")
       ? sourceCategory
       : over.id; // Ensure it's a valid category
-
+  
     if (!sourceCategory || !destinationCategory) {
       toast.error("Invalid move!");
       return;
     }
-
+  
     // Get the moved task
     const movedTask = categorizedTasks[sourceCategory].find(
       (task) => task._id === active.id
     );
     if (!movedTask) return;
-
-    // Remove from the source category
-    const updatedSourceTasks = categorizedTasks[sourceCategory].filter(
+  
+    // Remove the task from the source category
+    let updatedSourceTasks = categorizedTasks[sourceCategory].filter(
       (task) => task._id !== active.id
     );
-
-    // Add to the destination category at the last position
-    const updatedDestinationTasks = [
-      ...categorizedTasks[destinationCategory],
+  
+    // Prevent duplicate addition to the destination
+    let updatedDestinationTasks = categorizedTasks[destinationCategory].filter(
+      (task) => task._id !== active.id
+    );
+  
+    // Add the task to the destination category
+    updatedDestinationTasks = [
+      ...updatedDestinationTasks,
       { ...movedTask, category: destinationCategory },
     ];
-
+  
     // Recalculate the order for the destination category
     updatedDestinationTasks.forEach((task, index) => {
       task.order = index;
     });
-
-    // Update state
+  
+    // Update state with correctly modified lists
     setCategorizedTasks((prev) => ({
       ...prev,
       [sourceCategory]: updatedSourceTasks,
       [destinationCategory]: updatedDestinationTasks,
     }));
-
+  
     // Send update to the backend
-    await axiosSecure.put(`/tasks/update-order-category`, {
+    updateTask.mutate({
       taskId: active.id,
       newCategory: destinationCategory,
       tasks: updatedDestinationTasks.map(({ _id, order }) => ({ _id, order })),
     });
-
-    toast.success("Task moved successfully!");
   };
+  
 
   const deleteTask = useMutation({
     mutationFn: async (taskId) => {
