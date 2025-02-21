@@ -34,6 +34,23 @@ app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(logger);
 
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      console.log(err);
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+
+    next();
+  });
+};
+
 const uri = "mongodb://localhost:27017/";
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.t08r2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -104,8 +121,13 @@ async function run() {
   });
 
   // get all tasks
-  app.get("/tasks", async (req, res) => {
+  app.get("/tasks", verifyToken, async (req, res) => {
     const email = req.query.email;
+
+    if (email !== req.decoded.email) {
+      return res.status(403).send({ message: "access forbidden" });
+    }
+
     const tasks = await tasksCollection.find({ email }).toArray();
     res.send(tasks);
   });
