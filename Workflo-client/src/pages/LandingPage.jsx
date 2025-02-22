@@ -8,17 +8,13 @@ import { Loader2 } from "lucide-react";
 
 function LandingPage() {
   const { loading, setLoading, signInWithGoogle } = useContext(AuthContext);
-
   const navigate = useNavigate();
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       const result = await signInWithGoogle();
-
       await saveUser(result?.user);
-
-      console.log("User logged in:", result.user);
       toast.success(`Logged in as ${result?.user?.displayName}`);
 
       // navigate

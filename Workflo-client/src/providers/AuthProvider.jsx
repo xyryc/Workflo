@@ -46,13 +46,9 @@ const AuthProvider = ({ children }) => {
         );
       } else {
         setUser(currentUser);
-        const result = await axios.get(
-          `${import.meta.env.VITE_API_URL}/logout`,
-          {
-            withCredentials: true,
-          }
-        );
-        console.log(result);
+        await axios.get(`${import.meta.env.VITE_API_URL}/logout`, {
+          withCredentials: true,
+        });
       }
       setLoading(false);
     });
@@ -67,7 +63,7 @@ const AuthProvider = ({ children }) => {
     loading,
     setLoading,
     signInWithGoogle,
-    logOut
+    logOut,
   };
 
   return (
