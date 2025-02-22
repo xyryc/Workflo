@@ -138,10 +138,10 @@ const Tasklist = () => {
       collisionDetection={rectIntersection}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.keys(categorizedTasks).map((category) => (
           <Droppable key={category} id={category}>
-            <h2 className="font-bold text-lg mb-4 p-2 bg-gray-200 rounded-md shadow-md">
+            <h2 className="font-bold text-lg mb-4 p-2 rounded-md shadow-md text-neutral-800">
               {category}
             </h2>
 

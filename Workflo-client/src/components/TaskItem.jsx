@@ -23,10 +23,10 @@ export const TaskItem = ({ task }) => {
         ref={setNodeRef}
         {...attributes}
         {...listeners}
-        className="p-2 w-full bg-white cursor-grab transition-all duration-200 ease-in-out"
+        className="p-2 w-full cursor-grab transition-all duration-200 ease-in-out text-neutral-800"
         style={style}
       >
-        <p className="flex gap-1 mb-1">
+        <p className="flex gap-1 mb-1 ">
           <ListTodo className="aspect-auto w-5" /> {task.title}
         </p>
         <p className="text-xs text-gray-700 uppercase">
@@ -47,9 +47,9 @@ export const TaskItem = ({ task }) => {
       </li>
 
       {/* update and delete */}
-      <div className="flex flex-col gap-1.5 p-0.5">
-        <UpdateTask id={task._id} />
-        <DeleteTask id={task._id} />
+      <div className="flex flex-col gap-1.5 p-0.5 ">
+        <UpdateTask id={task._id} className="bg-neutral-600" />
+        <DeleteTask id={task._id} className="bg-neutral-600" />
       </div>
     </div>
   );
