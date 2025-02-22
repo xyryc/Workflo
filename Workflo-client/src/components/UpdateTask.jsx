@@ -16,8 +16,6 @@ import { Pen } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosSecure from "../hooks/useAxiosSecure";
 import toast from "react-hot-toast";
-
-import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -40,8 +38,6 @@ const UpdateTask = ({ id }) => {
     },
   });
 
-  const [category, setCategory] = useState(task?.category || "To-Do");
-
   const updateTaskMutation = useMutation({
     mutationFn: async (payload) => {
       return axiosSecure.put(`/update/tasks/${id}`, payload);
@@ -60,6 +56,7 @@ const UpdateTask = ({ id }) => {
     const form = e.target;
     const title = form.title.value;
     const description = form.description.value;
+    const category = form.category.value;
 
     const payload = { title, description, category };
 
@@ -114,7 +111,7 @@ const UpdateTask = ({ id }) => {
               <Label htmlFor="category" className="text-right">
                 Category
               </Label>
-              <Select defaultValue={task?.category} onValueChange={setCategory}>
+              <Select name="category" defaultValue={task?.category}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>

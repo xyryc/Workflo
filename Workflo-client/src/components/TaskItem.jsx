@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import DeleteTask from "./DeleteTask";
 import UpdateTask from "./UpdateTask";
+import { ListTodo, SquareCheck } from "lucide-react";
 
 export const TaskItem = ({ task }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -25,7 +26,21 @@ export const TaskItem = ({ task }) => {
         className="p-2 w-full bg-white cursor-grab transition-all duration-200 ease-in-out"
         style={style}
       >
-        <p>{task.title}</p>
+        <p className="flex gap-1 mb-1">
+          <ListTodo className="aspect-auto w-5" /> {task.title}
+        </p>
+        <p className="text-xs text-gray-700 uppercase">
+          {new Date(task.createdAt).toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+          })}
+        </p>
+
         <blockquote className="italic text-sm mt-2">
           {task.description}
         </blockquote>
