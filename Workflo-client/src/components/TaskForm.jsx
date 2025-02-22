@@ -30,11 +30,13 @@ const TaskForm = () => {
     const email = user?.email;
 
     const payload = { title, description, email };
+    const activity = { activity: `Task added: ${title}`, email: user?.email };
 
     try {
       await axiosSecure.post("/tasks", payload);
-      toast.success("Task added!");
+      await axiosSecure.post("/activity", activity);
 
+      toast.success("Task added!");
       // Refetch task list
       queryClient.invalidateQueries(["tasks"]);
     } catch (error) {

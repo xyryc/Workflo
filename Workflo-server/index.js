@@ -69,6 +69,7 @@ async function run() {
   const db = client.db("workfloDB");
   const usersCollection = db.collection("users");
   const tasksCollection = db.collection("tasks");
+  const activityCollection = db.collection("activity");
 
   // Generate jwt token
   app.post("/jwt", async (req, res) => {
@@ -142,6 +143,7 @@ async function run() {
     res.send(result);
   });
 
+  // update task
   app.put("/update/tasks/:id", verifyToken, async (req, res) => {
     const { id } = req.params;
     const { title, description, category } = req.body;
@@ -159,16 +161,28 @@ async function run() {
     res.send(result);
   });
 
-  // update task category
-  // app.patch("/tasks/:id", async (req, res) => {
-  //   const { id } = req.params;
-  //   const { category, order } = req.body;
-  //   const result = await tasksCollection.updateOne(
-  //     { _id: new ObjectId(id) },
-  //     { $set: { category, order } }
-  //   );
-  //   res.send(result);
-  // });
+  // activity log
+  app.post("/activity", verifyToken, async (req, res) => {
+    const activity = req.body;
+
+    activity.createdAt = Date.now();
+
+    const result = await activityCollection.insertOne(activity);
+    res.send(result);
+  });
+
+  // get activity data
+  app.get("/activity/:email", verifyToken, async (req, res) => {
+    const { email } = req.params;
+    const query = { email };
+
+    if (email !== req.decoded.email) {
+      return res.status(403).send({ message: "access forbidden" });
+    }
+
+    const result = await activityCollection.find(query).toArray();
+    res.send(result);
+  });
 
   app.put("/tasks/update-order-category", verifyToken, async (req, res) => {
     const { taskId, newCategory, tasks } = req.body;
