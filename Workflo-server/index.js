@@ -142,7 +142,22 @@ async function run() {
     res.send(result);
   });
 
-  
+  app.put("/update/tasks/:id", verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const { title, description, category } = req.body;
+
+    const query = { _id: new ObjectId(id) };
+    const updatedDoc = {
+      $set: {
+        title,
+        description,
+        category,
+      },
+    };
+
+    const result = await tasksCollection.updateOne(query, updatedDoc);
+    res.send(result);
+  });
 
   // update task category
   // app.patch("/tasks/:id", async (req, res) => {
