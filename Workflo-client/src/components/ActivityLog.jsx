@@ -9,15 +9,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../providers/AuthProvider";
 
 const ActivityLog = () => {
   const axiosSecure = useAxiosSecure();
   const { user } = useContext(AuthContext);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Fetch task by id
-  const { data: activities = [] } = useQuery({
+  const { data: activities = [], refetch } = useQuery({
     queryKey: ["activities", user?.email],
     enabled: !!user?.email,
     queryFn: async () => {
@@ -26,25 +27,30 @@ const ActivityLog = () => {
     },
   });
 
-  console.log(activities);
+  // Refetch data when dialog opens
+  const handleDialogOpen = (open) => {
+    setIsOpen(open);
+    if (open) {
+      refetch();
+    }
+  };
 
   return (
     <div>
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
         <DialogTrigger asChild>
           <Button>Activity Log</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Activity Log</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="max-h-[300px] overflow-y-auto">
               {activities?.map((item) => (
                 <span
-                  className="grid grid-cols-3 gap-2 text-left"
+                  className="grid grid-cols-3 items-center gap-2 text-left py-0.5"
                   key={item._id}
                 >
                   <span className="col-span-2">{item?.activity}</span>
-
                   <span className="text-xs italic">
                     {new Date(item.createdAt).toLocaleString("en-GB", {
                       day: "2-digit",

@@ -180,7 +180,11 @@ async function run() {
       return res.status(403).send({ message: "access forbidden" });
     }
 
-    const result = await activityCollection.find(query).toArray();
+    const result = await activityCollection
+      .find(query)
+      .sort({ createdAt: -1 })
+      .toArray();
+
     res.send(result);
   });
 

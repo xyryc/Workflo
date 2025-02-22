@@ -12,15 +12,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import useAxiosSecure from "../hooks/useAxiosSecure";
+import { AuthContext } from "../providers/AuthProvider";
 
 const DeleteTask = ({ id }) => {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const axiosSecure = useAxiosSecure();
+  const { user } = useContext(AuthContext);
 
   const deleteTask = useMutation({
     mutationFn: async (taskId) => {
@@ -33,8 +35,14 @@ const DeleteTask = ({ id }) => {
     },
   });
 
-  const onDelete = (taskId) => {
+  const onDelete = async (taskId) => {
     deleteTask.mutate(taskId);
+
+    const activity = {
+      activity: `Task deleted`,
+      email: user?.email,
+    };
+    await axiosSecure.post("/activity", activity);
   };
 
   return (

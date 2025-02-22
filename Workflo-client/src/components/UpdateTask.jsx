@@ -23,8 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { useContext } from "react";
+import { AuthContext } from "../providers/AuthProvider";
 
 const UpdateTask = ({ id }) => {
+  const { user } = useContext(AuthContext);
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
 
@@ -51,7 +54,7 @@ const UpdateTask = ({ id }) => {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
     const title = form.title.value;
@@ -61,6 +64,12 @@ const UpdateTask = ({ id }) => {
     const payload = { title, description, category };
 
     updateTaskMutation.mutate(payload);
+
+    const activity = {
+      activity: `Task updated`,
+      email: user?.email,
+    };
+    await axiosSecure.post("/activity", activity);
   };
 
   return (

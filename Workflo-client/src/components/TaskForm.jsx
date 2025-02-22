@@ -30,7 +30,7 @@ const TaskForm = () => {
     const email = user?.email;
 
     const payload = { title, description, email };
-    const activity = { activity: `Task added: ${title}`, email: user?.email };
+    const activity = { activity: `Task added`, email: user?.email };
 
     try {
       await axiosSecure.post("/tasks", payload);

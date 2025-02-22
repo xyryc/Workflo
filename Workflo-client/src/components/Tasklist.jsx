@@ -62,6 +62,12 @@ const Tasklist = () => {
   // update task orer and category
   const updateTask = useMutation({
     mutationFn: async ({ taskId, newCategory, tasks }) => {
+      const activity = {
+        activity: `Task moved to ${newCategory}`,
+        email: user?.email,
+      };
+      await axiosSecure.post("/activity", activity);
+
       return await axiosSecure.put(`/tasks/update-order-category`, {
         taskId,
         newCategory,
