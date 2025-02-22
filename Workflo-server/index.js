@@ -13,6 +13,7 @@ const corsOptions = {
     "http://localhost:5173",
     "https://workflo.web.app",
     "https://workflo.firebaseapp.com",
+    "http://workflo.surge.sh",
     "https://workflo-server.vercel.app",
   ],
   credentials: true,
@@ -40,6 +41,7 @@ const verifyToken = async (req, res, next) => {
   if (!token) {
     return res.status(401).send({ message: "unauthorized access" });
   }
+
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
       console.log(err);
@@ -100,7 +102,7 @@ async function run() {
 
   // task apis
   // save a new task
-  app.post("/tasks", async (req, res) => {
+  app.post("/tasks", verifyToken, async (req, res) => {
     const task = req.body;
 
     // Find the highest order in the "To-Do" category
@@ -132,6 +134,16 @@ async function run() {
     res.send(tasks);
   });
 
+  // get task by id
+  app.get("/tasks/:id", verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const query = { _id: new ObjectId(id) };
+    const result = await tasksCollection.findOne(query);
+    res.send(result);
+  });
+
+  
+
   // update task category
   // app.patch("/tasks/:id", async (req, res) => {
   //   const { id } = req.params;
@@ -143,7 +155,7 @@ async function run() {
   //   res.send(result);
   // });
 
-  app.put("/tasks/update-order-category", async (req, res) => {
+  app.put("/tasks/update-order-category", verifyToken, async (req, res) => {
     const { taskId, newCategory, tasks } = req.body;
 
     try {
@@ -172,7 +184,7 @@ async function run() {
   });
 
   // delete a task
-  app.delete("/tasks/delete/:id", async (req, res) => {
+  app.delete("/tasks/delete/:id", verifyToken, async (req, res) => {
     const { id } = req.params;
 
     const query = { _id: new ObjectId(id) };
