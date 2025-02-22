@@ -1,25 +1,14 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
 
-export const TaskItem = ({ task, onDelete }) => {
+import DeleteTask from "./DeleteTask";
+import UpdateTask from "./UpdateTask";
+
+export const TaskItem = ({ task }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: task._id });
-  const [open, setOpen] = useState(false);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -42,29 +31,11 @@ export const TaskItem = ({ task, onDelete }) => {
         </blockquote>
       </li>
 
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <Trash2 />
-          </Button>
-        </AlertDialogTrigger>
-
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              task.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => onDelete(task._id)}>
-              Yes, Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* update and delete */}
+      <div className="flex flex-col gap-1.5 p-0.5">
+        <UpdateTask id={task._id} />
+        <DeleteTask id={task._id} />
+      </div>
     </div>
   );
 };

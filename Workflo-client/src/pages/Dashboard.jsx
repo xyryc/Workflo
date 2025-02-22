@@ -9,7 +9,7 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col items-center gap-6 h-screen py-10 container mx-auto px-4">
       <h2 className="scroll-m-20  pb-2 text-xl font-semibold tracking-tight first:mt-0">
-        Hello, {user?.displayName}. Let's make today productive!
+        Hello, {user?.displayName || "Anonymous"}. Let's make today productive!
       </h2>
       <TaskForm />
       <Tasklist />

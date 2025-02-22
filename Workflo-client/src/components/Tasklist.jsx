@@ -59,17 +59,6 @@ const Tasklist = () => {
     }
   }, [tasks]);
 
-  // API call to update task category, order
-  // const updateTaskOrder = useMutation({
-  //   mutationFn: async ({ taskId, category, order }) => {
-  //     return axiosSecure.patch(`/tasks/${taskId}`, { category, order });
-  //   },
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({ queryKey: ["tasks"] });
-  //     toast.success("Task updated successfully!");
-  //   },
-  // });
-
   // update task orer and category
   const updateTask = useMutation({
     mutationFn: async ({ taskId, newCategory, tasks }) => {
@@ -88,53 +77,53 @@ const Tasklist = () => {
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over) return;
-  
+
     const sourceCategory = Object.keys(categorizedTasks).find((cat) =>
       categorizedTasks[cat]?.some((task) => task._id === active.id)
     );
     const destinationCategory = over.id.startsWith("task_")
       ? sourceCategory
       : over.id; // Ensure it's a valid category
-  
+
     if (!sourceCategory || !destinationCategory) {
       toast.error("Invalid move!");
       return;
     }
-  
+
     // Get the moved task
     const movedTask = categorizedTasks[sourceCategory].find(
       (task) => task._id === active.id
     );
     if (!movedTask) return;
-  
+
     // Remove the task from the source category
     let updatedSourceTasks = categorizedTasks[sourceCategory].filter(
       (task) => task._id !== active.id
     );
-  
+
     // Prevent duplicate addition to the destination
     let updatedDestinationTasks = categorizedTasks[destinationCategory].filter(
       (task) => task._id !== active.id
     );
-  
+
     // Add the task to the destination category
     updatedDestinationTasks = [
       ...updatedDestinationTasks,
       { ...movedTask, category: destinationCategory },
     ];
-  
+
     // Recalculate the order for the destination category
     updatedDestinationTasks.forEach((task, index) => {
       task.order = index;
     });
-  
+
     // Update state with correctly modified lists
     setCategorizedTasks((prev) => ({
       ...prev,
       [sourceCategory]: updatedSourceTasks,
       [destinationCategory]: updatedDestinationTasks,
     }));
-  
+
     // Send update to the backend
     updateTask.mutate({
       taskId: active.id,
@@ -142,18 +131,6 @@ const Tasklist = () => {
       tasks: updatedDestinationTasks.map(({ _id, order }) => ({ _id, order })),
     });
   };
-  
-
-  const deleteTask = useMutation({
-    mutationFn: async (taskId) => {
-      const res = await axiosSecure.delete(`/tasks/delete/${taskId}`);
-      console.log(res);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Task deleted!");
-    },
-  });
 
   return (
     <DndContext
@@ -173,11 +150,7 @@ const Tasklist = () => {
             >
               <ul className="min-h-[200px] min-w-[300px] border border-black/10 p-2 space-y-2 rounded-xl">
                 {categorizedTasks[category].map((task) => (
-                  <TaskItem
-                    key={task._id}
-                    task={task}
-                    onDelete={(taskId) => deleteTask.mutate(taskId)}
-                  />
+                  <TaskItem key={task._id} task={task} />
                 ))}
               </ul>
             </SortableContext>

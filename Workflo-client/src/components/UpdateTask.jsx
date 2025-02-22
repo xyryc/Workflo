@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -10,33 +11,34 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "./ui/label";
-import toast from "react-hot-toast";
-import { useContext } from "react";
-import { AuthContext } from "../providers/AuthProvider";
-import { useQueryClient } from "@tanstack/react-query";
 import { DialogClose } from "./ui/dialog";
+import { Pen } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../hooks/useAxiosSecure";
+import toast from "react-hot-toast";
 
-const TaskForm = () => {
-  const { user } = useContext(AuthContext);
-  const queryClient = useQueryClient();
+const UpdateTask = ({ id }) => {
   const axiosSecure = useAxiosSecure();
 
-  const handleSubmit = async (e) => {
+  // Fetch task by id
+  const { data: task = {} } = useQuery({
+    queryKey: ["tasks"],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await axiosSecure.get(`/tasks/${id}`);
+      return data;
+    },
+  });
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     const form = e.target;
     const title = form.title.value;
     const description = form.description.value;
-    const email = user?.email;
 
-    const payload = { title, description, email };
+    const payload = { title, description };
 
     try {
-      await axiosSecure.post("/tasks", payload);
-      toast.success("Task added!");
-
-      // Refetch task list
-      queryClient.invalidateQueries(["tasks"]);
     } catch (error) {
       console.log(error);
       toast.error(error.message);
@@ -46,11 +48,13 @@ const TaskForm = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Add Task</Button>
+        <Button size="sm" variant="outline">
+          <Pen />
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Task</DialogTitle>
+          <DialogTitle>Update Task</DialogTitle>
           <DialogDescription>
             Fill up task details and save changes
           </DialogDescription>
@@ -62,6 +66,7 @@ const TaskForm = () => {
                 Title
               </Label>
               <Input
+                defaultValue={task?.title}
                 maxLength={50}
                 required
                 id="title"
@@ -74,6 +79,7 @@ const TaskForm = () => {
                 Description
               </Label>
               <Input
+                defaultValue={task.description}
                 maxLength={200}
                 required
                 id="description"
@@ -84,7 +90,7 @@ const TaskForm = () => {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">Save task</Button>
+              <Button type="submit">Update task</Button>
             </DialogClose>
           </DialogFooter>
         </form>
@@ -93,4 +99,4 @@ const TaskForm = () => {
   );
 };
 
-export default TaskForm;
+export default UpdateTask;
