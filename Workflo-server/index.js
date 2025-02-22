@@ -17,23 +17,25 @@ const corsOptions = {
     "https://workflo-server.vercel.app",
   ],
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
   optionSuccessStatus: 200,
 };
 
-const logger = (req, res, next) => {
-  console.log(
-    `⏳ Req: ${req.hostname} || ${req.method} - ${
-      req.url
-    } at ${new Date().toLocaleTimeString()}`
-  );
-  next();
-};
+// const logger = (req, res, next) => {
+//   console.log(
+//     `⏳ Req: ${req.hostname} || ${req.method} - ${
+//       req.url
+//     } at ${new Date().toLocaleTimeString()}`
+//   );
+//   next();
+// };
 
 // middleware
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors(corsOptions));
-app.use(logger);
+// app.use(logger);
 
 const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token;
